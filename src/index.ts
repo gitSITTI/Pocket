@@ -1,8 +1,8 @@
 // Public API for building on pocket.
-export { loadConfig, type PocketConfig, type LayerConfig, type LoadConfigOptions } from "./config.js";
+export { DEFAULT_PROMPT_TYPES, loadConfig, type PocketConfig, type LayerConfig, type LoadConfigOptions } from "./config.js";
 export { KnowledgeBase, summarize, type EntryFilter, type EntrySummary } from "./kb.js";
 export { splitFrontmatter, serializeEntry } from "./frontmatter.js";
-export { createServer } from "./mcp.js";
+export { createChangeNotifier, createServer, watchForChanges } from "./mcp.js";
 export {
   ProposalStore,
   approveProposal,

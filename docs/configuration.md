@@ -17,6 +17,7 @@ If neither exists, Pocket uses a single layer: the directory in `POCKET_CONTENT_
   ],
   "proposalsDir": "./.pocket/proposals",
   "readOnly": false,
+  "promptTypes": ["process"],
   "types": [
     {
       "name": "runbook",
@@ -34,6 +35,7 @@ Relative paths are resolved from the folder containing the config file.
 | `contentDirs` | Layers, least specific first. Each has a `scope` name (lowercase letters, digits, hyphens) and a `path`. At least one is required. |
 | `proposalsDir` | Where proposals are written. Default `.pocket/proposals`. |
 | `readOnly` | When true, `add_entry` and `update_entry` are not offered. |
+| `promptTypes` | Entry types offered as MCP prompts (slash commands), active entries only. Default `["process"]`. See [resources-and-prompts.md](resources-and-prompts.md). |
 | `types` | Extra entry types, or overrides of built-in ones. `requiredFields` lists frontmatter keys that must be present for that type. |
 
 ## Layers
@@ -48,6 +50,7 @@ Later layers override earlier ones when they define the same entry id. A typical
 | `POCKET_CONTENT_DIR` | Single content directory, used only when there is no config file |
 | `POCKET_PROPOSALS_DIR` | Overrides the proposals directory |
 | `POCKET_READ_ONLY` | Set to `1` to disable the write tools |
+| `POCKET_WATCH_INTERVAL_MS` | How often the server checks for changed entries to tell clients (default `5000`, `0` turns it off) |
 
 See `.env.example`. Never commit a real `.env` file.
 

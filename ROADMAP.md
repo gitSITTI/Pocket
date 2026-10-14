@@ -36,9 +36,11 @@ Status: done, in the unreleased version ([#4](https://github.com/gitSITTI/Pocket
 
 ## 3. MCP resources and prompts
 
+Status: done, in the unreleased version ([#5](https://github.com/gitSITTI/Pocket/issues/5)). See [docs/resources-and-prompts.md](docs/resources-and-prompts.md).
+
 Pocket exposes tools only. The MCP spec also defines:
 
-- **Resources**, chosen by the application, with `lastModified` and `priority` annotations. A natural fit for entries, for example `pocket://<type>/<id>`, plus a list-changed notification.
+- **Resources**, chosen by the application, with `lastModified` and `priority` annotations. A natural fit for entries, as `pocket://entry/<id>`, plus a list-changed notification.
 - **Prompts**, chosen by the user, like slash commands. A natural fit for `process` and playbook entries.
 
 See the [resources](https://modelcontextprotocol.io/specification/2025-06-18/server/resources) and [prompts](https://modelcontextprotocol.io/specification/2025-06-18/server/prompts) pages.

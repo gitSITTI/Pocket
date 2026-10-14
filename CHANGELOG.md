@@ -5,6 +5,7 @@ All notable changes are recorded here. The project follows [Semantic Versioning]
 ## Unreleased
 
 - Added a roadmap and a list of open content sources with checked licenses.
+- MCP resources and prompts: every entry is a resource at `pocket://entry/<id>` with `priority`, `lastModified` and `audience` annotations and id completion, and each active entry of a type in the new `promptTypes` config key (default `process`) is a prompt. The server tells clients when entries change on disk; `POCKET_WATCH_INTERVAL_MS` sets the check interval (`0` turns it off). See [docs/resources-and-prompts.md](docs/resources-and-prompts.md). Closes #5.
 - Agent Skills: `pocket export skills <dir>` writes skill entries as `SKILL.md` folders, and `pocket import skills <dir> --source <where from>` turns skill folders into proposals. See [docs/agent-skills.md](docs/agent-skills.md). Closes #4.
 - Provenance: entries accept `license` and `sourceHash` alongside `source`. `add_entry` and `update_entry` accept `license` and an `evidence` block (task, outcome, link). Closes #3.
 - Review: `pocket proposals show` prints source, license, hash and evidence (labelled as the proposer's claim), and lists things to look at: a missing source or license, `allowed-tools`, instruction-like text, and changes to the title, summary, tags, source or license.

@@ -61,6 +61,7 @@ export function summarize(entry: Entry): EntrySummary {
 export class KnowledgeBase {
   readonly types: TypeRegistry;
   private signature = "";
+  private scans = 0;
   private effective = new Map<string, Entry>();
   private found: Issue[] = [];
   private index = new SearchIndex([]);
@@ -84,6 +85,7 @@ export class KnowledgeBase {
       .join("|");
     if (!force && signature === this.signature) return;
     this.signature = signature;
+    this.scans += 1;
 
     const issues: Issue[] = [];
     const effective = new Map<string, Entry>();
@@ -184,6 +186,11 @@ export class KnowledgeBase {
     this.effective = effective;
     this.found = issues;
     this.index = new SearchIndex([...effective.values()]);
+  }
+
+  /** Increases each time the content is re-scanned, so callers can tell when anything may have changed. */
+  get generation(): number {
+    return this.scans;
   }
 
   layer(scope: string): LayerConfig | undefined {

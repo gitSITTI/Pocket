@@ -34,7 +34,7 @@ Pocket is a thin layer over a folder of Markdown files.
 | `src/lint.ts` | Flags instruction-like text and hidden characters in entries |
 | `src/sanitize.ts` | Detects hidden characters and makes them visible |
 | `src/skills.ts` | Import and export of the Agent Skills format |
-| `src/mcp.ts` | Defines the MCP tools |
+| `src/mcp.ts` | Defines the MCP tools, resources and prompts, and the change notifications |
 | `src/server.ts` | Executable entry point for the MCP server (stdio) |
 | `src/cli.ts` | Executable entry point for the human CLI |
 | `src/index.ts` | Public API when using Pocket as a library |

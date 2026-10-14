@@ -19,7 +19,14 @@ export interface PocketConfig {
   /** When true, the MCP server exposes no write tools at all. */
   readOnly: boolean;
   types: TypeDef[];
+  /**
+   * Entry types offered as MCP prompts (slash commands), for active entries only.
+   * Defaults to ["process"] when not set.
+   */
+  promptTypes?: string[];
 }
+
+export const DEFAULT_PROMPT_TYPES = ["process"];
 
 const configSchema = z.object({
   contentDirs: z
@@ -32,6 +39,7 @@ const configSchema = z.object({
     .min(1, "contentDirs needs at least one entry"),
   proposalsDir: z.string().min(1).optional(),
   readOnly: z.boolean().default(false),
+  promptTypes: z.array(z.string().regex(ID_PATTERN, "prompt type names use lowercase letters, digits and hyphens")).default(DEFAULT_PROMPT_TYPES),
   types: z
     .array(
       z.object({
@@ -82,6 +90,7 @@ export function loadConfig(options: LoadConfigOptions = {}): PocketConfig {
       proposalsDir: resolve(cwd, env.POCKET_PROPOSALS_DIR ?? ".pocket/proposals"),
       readOnly: readOnlyFromEnv,
       types: mergeTypes([]),
+      promptTypes: DEFAULT_PROMPT_TYPES,
     };
   }
 
@@ -108,5 +117,6 @@ export function loadConfig(options: LoadConfigOptions = {}): PocketConfig {
     proposalsDir: resolve(configDir, env.POCKET_PROPOSALS_DIR ?? parsed.data.proposalsDir ?? ".pocket/proposals"),
     readOnly: parsed.data.readOnly || readOnlyFromEnv,
     types: mergeTypes(parsed.data.types),
+    promptTypes: parsed.data.promptTypes,
   };
 }

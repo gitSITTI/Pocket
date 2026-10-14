@@ -5,6 +5,7 @@
   ],
   "proposalsDir": "./.pocket/proposals",
   "readOnly": false,
+  "promptTypes": ["process"],
   "types": [
     {
       "name": "runbook",

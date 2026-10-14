@@ -1,9 +1,56 @@
 import { readFileSync } from "node:fs";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { ErrorCode, GetPromptRequestSchema, ListPromptsRequestSchema, McpError } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
+import { DEFAULT_PROMPT_TYPES } from "./config.js";
+import { serializeEntry } from "./frontmatter.js";
 import { KnowledgeBase, summarize } from "./kb.js";
 import { ProposalStore, evidenceSchema, proposeAdd, proposeUpdate, type ProposeResult } from "./proposals.js";
-import { ENTRY_STATUSES } from "./types.js";
+import { ENTRY_STATUSES, type Entry, type EntryStatus } from "./types.js";
+
+/** Resources are addressed as pocket://entry/<id>. */
+const ENTRY_URI = /^pocket:\/\/entry\/([a-z0-9][a-z0-9-]*)$/;
+
+/** A hint to clients about how much context an entry deserves. Active knowledge matters most. */
+const STATUS_PRIORITY: Record<EntryStatus, number> = { active: 0.8, draft: 0.3, deprecated: 0.1 };
+
+// The MCP specification defines -32002 for a resource that does not exist; the SDK's ErrorCode enum has no name for it.
+const RESOURCE_NOT_FOUND = -32002;
+
+function entryUri(id: string): string {
+  return `pocket://entry/${id}`;
+}
+
+function resourceFor(entry: Entry) {
+  return {
+    uri: entryUri(entry.id),
+    name: entry.id,
+    title: entry.title,
+    description: entry.status === "active" ? entry.summary : `(${entry.status}) ${entry.summary}`,
+    mimeType: "text/markdown",
+    annotations: {
+      audience: ["user" as const, "assistant" as const],
+      priority: STATUS_PRIORITY[entry.status],
+      ...(entry.updated !== undefined ? { lastModified: `${entry.updated}T00:00:00Z` } : {}),
+    },
+  };
+}
+
+/** Active entries of the configured prompt types. Drafts and deprecated entries are never offered as prompts. */
+function promptEntries(kb: KnowledgeBase): Entry[] {
+  const types = new Set(kb.config.promptTypes ?? DEFAULT_PROMPT_TYPES);
+  return kb.listEntries({ status: "active" }).filter((entry) => types.has(entry.type));
+}
+
+function promptText(entry: Entry, context: string | undefined): string {
+  const lines = [
+    `Follow "${entry.title}" from the knowledge base (${entryUri(entry.id)}, version ${entry.version}).`,
+    "",
+    entry.body.trim(),
+  ];
+  if (context) lines.push("", "Apply it to this:", context);
+  return lines.join("\n");
+}
 
 function packageVersion(): string {
   try {
@@ -169,6 +216,63 @@ export function createServer(kb: KnowledgeBase, store: ProposalStore): McpServer
     },
   );
 
+  // Resources: every entry, for clients that let a person pick context. Always read-only.
+  server.registerResource(
+    "entry",
+    new ResourceTemplate("pocket://entry/{id}", {
+      list: async () => ({ resources: kb.listEntries().map(resourceFor) }),
+      complete: {
+        id: (value) =>
+          kb
+            .listEntries()
+            .map((entry) => entry.id)
+            .filter((id) => id.startsWith(value))
+            .slice(0, 100),
+      },
+    }),
+    {
+      title: "Pocket entry",
+      description: "One entry from the body of knowledge: Markdown with its YAML frontmatter.",
+      mimeType: "text/markdown",
+    },
+    async (uri) => {
+      const match = ENTRY_URI.exec(uri.href);
+      if (!match) throw new McpError(ErrorCode.InvalidParams, `Not a Pocket entry address: ${uri.href}`);
+      const entry = kb.getEntry(match[1]!);
+      if (!entry) throw new McpError(RESOURCE_NOT_FOUND, "Resource not found", { uri: uri.href });
+      return {
+        contents: [
+          {
+            uri: entryUri(entry.id),
+            mimeType: "text/markdown",
+            text: serializeEntry(entry, entry.body),
+          },
+        ],
+      };
+    },
+  );
+
+  // Prompts: active entries of the configured types, for clients that offer them as commands.
+  // The list is computed on every request so it always matches the files on disk.
+  server.server.registerCapabilities({ prompts: { listChanged: true } });
+  server.server.setRequestHandler(ListPromptsRequestSchema, async () => ({
+    prompts: promptEntries(kb).map((entry) => ({
+      name: entry.id,
+      title: entry.title,
+      description: entry.summary,
+      arguments: [{ name: "context", description: "What you are applying this to, in your own words.", required: false }],
+    })),
+  }));
+  server.server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+    const entry = promptEntries(kb).find((candidate) => candidate.id === request.params.name);
+    if (!entry) throw new McpError(ErrorCode.InvalidParams, `Unknown prompt "${request.params.name}"`);
+    const context = request.params.arguments?.context?.trim();
+    return {
+      description: entry.summary,
+      messages: [{ role: "user" as const, content: { type: "text" as const, text: promptText(entry, context || undefined) } }],
+    };
+  });
+
   if (kb.config.readOnly) return server;
 
   const writeAnnotations = { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false };
@@ -270,4 +374,39 @@ export function createServer(kb: KnowledgeBase, store: ProposalStore): McpServer
   );
 
   return server;
+}
+
+/**
+ * Returns a function that tells connected clients the resource and prompt lists changed,
+ * if the content on disk has changed since it last looked. Returns true when it notified.
+ * Changes made by another process, such as `pocket proposals approve`, are picked up here.
+ */
+export function createChangeNotifier(kb: KnowledgeBase, server: McpServer): () => boolean {
+  let seen = kb.generation;
+  return () => {
+    kb.refresh();
+    if (kb.generation === seen) return false;
+    seen = kb.generation;
+    try {
+      server.sendResourceListChanged();
+      server.sendPromptListChanged();
+    } catch (error) {
+      console.error(`pocket: could not send a list-changed notification: ${(error as Error).message}`);
+    }
+    return true;
+  };
+}
+
+/** Check for content changes every `intervalMs` milliseconds. Returns a function that stops the checks. */
+export function watchForChanges(kb: KnowledgeBase, server: McpServer, intervalMs = 5000): () => void {
+  const check = createChangeNotifier(kb, server);
+  const timer = setInterval(() => {
+    try {
+      check();
+    } catch (error) {
+      console.error(`pocket: could not check for changes: ${(error as Error).message}`);
+    }
+  }, intervalMs);
+  timer.unref();
+  return () => clearInterval(timer);
 }

@@ -56,6 +56,8 @@ Run `npm link` if you want the `pocket` command on your PATH. Docker works too; 
 
 Set `POCKET_READ_ONLY=1` and the two write tools are not offered at all.
 
+Every entry is also an MCP resource (`pocket://entry/<id>`) that a person can attach from the client, and each active `process` entry is a prompt (a slash command). Clients are told when entries change. See [docs/resources-and-prompts.md](docs/resources-and-prompts.md).
+
 Proposals can carry a `source`, a `license` and `evidence` (the task, the outcome and a link to a trace). The review screen shows them, labels evidence as the proposer's claim, and flags anything that deserves a closer look.
 
 ## What an entry looks like
@@ -93,6 +95,7 @@ If someone edited the entry in the meantime, the proposal is rejected as stale i
 - [Configuration](docs/configuration.md): config file, environment variables, layers, Docker
 - [Approval flow](docs/approval-flow.md): proposals, review, and what is and is not guaranteed
 - [Agent Skills](docs/agent-skills.md): export skill entries and import skill folders as proposals
+- [Resources and prompts](docs/resources-and-prompts.md): entries as attachable resources and playbooks as slash commands
 - [Extending Pocket](docs/extending.md): new types, tools, search backends, using it as a library
 - [Secret scanning for all your repos](docs/gitleaks-for-all-repos.md)
 - [Content sources](docs/content-sources.md): open material worth importing, with licenses

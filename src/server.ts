@@ -2,7 +2,7 @@
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { loadConfig } from "./config.js";
 import { KnowledgeBase } from "./kb.js";
-import { createServer } from "./mcp.js";
+import { createServer, watchForChanges } from "./mcp.js";
 import { ProposalStore } from "./proposals.js";
 
 // With stdio transport, stdout carries the protocol. Log to stderr only.
@@ -12,6 +12,10 @@ async function main(): Promise<void> {
   const store = new ProposalStore(config.proposalsDir);
   const server = createServer(kb, store);
   await server.connect(new StdioServerTransport());
+
+  // Tell clients when entries change on disk. POCKET_WATCH_INTERVAL_MS=0 turns this off.
+  const interval = Number.parseInt(process.env.POCKET_WATCH_INTERVAL_MS ?? "5000", 10);
+  if (Number.isFinite(interval) && interval > 0) watchForChanges(kb, server, interval);
 
   const issues = kb.issues();
   const errors = issues.filter((i) => i.level === "error").length;
