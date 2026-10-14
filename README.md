@@ -90,6 +90,8 @@ If someone edited the entry in the meantime, the proposal is rejected as stale i
 - [Approval flow](docs/approval-flow.md): proposals, review, and what is and is not guaranteed
 - [Extending Pocket](docs/extending.md): new types, tools, search backends, using it as a library
 - [Secret scanning for all your repos](docs/gitleaks-for-all-repos.md)
+- [Content sources](docs/content-sources.md): open material worth importing, with licenses
+- [Roadmap](ROADMAP.md): what may come next, and why
 
 ## Security
 
