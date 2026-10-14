@@ -1,0 +1,6 @@
+#!/bin/sh
+# Blocks a commit whose message contains a term from your private .denylist file.
+# Enabled by:  sh scripts/setup-hooks.sh
+if [ -f scripts/denylist-check.sh ]; then
+  exec sh scripts/denylist-check.sh message "$1"
+fi

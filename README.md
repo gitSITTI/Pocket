@@ -93,7 +93,7 @@ If someone edited the entry in the meantime, the proposal is rejected as stale i
 
 ## Security
 
-Secret scanning with gitleaks runs before commits and in CI. See [SECURITY.md](SECURITY.md) to report a vulnerability and for what the approval model does and does not protect against.
+Secret scanning with gitleaks runs before commits and in CI, and an optional denylist check keeps private names out of public repos. See [SECURITY.md](SECURITY.md) to report a vulnerability and for what the approval model does and does not protect against.
 
 ## Contributing
 

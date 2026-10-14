@@ -9,6 +9,7 @@ You need Node 22.12 or newer.
 ```sh
 npm ci
 sh scripts/setup-hooks.sh   # turns on the gitleaks pre-commit check (install gitleaks first)
+                            # an optional private .denylist file adds a check for names you never want published
 npm run typecheck
 npm test
 npm run build

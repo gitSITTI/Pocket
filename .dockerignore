@@ -10,3 +10,4 @@ dist
 /pocket.config.json
 coverage
 *.log
+/.denylist

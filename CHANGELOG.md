@@ -2,6 +2,11 @@
 
 All notable changes are recorded here. The project follows [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+- Denylist check: keeps private terms out of public repos. Runs as a pre-commit and commit-msg hook and as a CI job, reading terms from an untracked `.denylist` file or a `PUBLIC_DENYLIST` secret. Output never shows the matched text.
+- CI runs the gitleaks release binary directly (pinned and checksum-verified) instead of the GitHub Action, so it needs no license key on organization accounts.
+
 ## 0.1.0
 
 First release.

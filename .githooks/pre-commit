@@ -1,7 +1,12 @@
 #!/bin/sh
-# Blocks a commit if the staged changes contain a secret.
+# Blocks a commit if the staged changes contain a secret or a private term.
 # Enable once per clone with:  sh scripts/setup-hooks.sh
 # Skip in an emergency with:   git commit --no-verify   (CI scans again anyway)
+
+# Private-term check. Needs a local, untracked .denylist file; skipped when there is none.
+if [ -f scripts/denylist-check.sh ]; then
+  sh scripts/denylist-check.sh staged || exit 1
+fi
 
 if ! command -v gitleaks >/dev/null 2>&1; then
   echo "gitleaks is not installed, so this commit was blocked." >&2

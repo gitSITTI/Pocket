@@ -1,0 +1,33 @@
+name: Denylist
+
+# Fails if a private term appears in a tracked file, a file name, or commit metadata.
+# The term list lives in the PUBLIC_DENYLIST repository secret (one term per line),
+# never in this repository. See docs/gitleaks-for-all-repos.md.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  denylist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check for private terms
+        env:
+          PUBLIC_DENYLIST: ${{ secrets.PUBLIC_DENYLIST }}
+        run: |
+          if [ -z "$PUBLIC_DENYLIST" ]; then
+            echo "::warning::PUBLIC_DENYLIST secret is not set (expected on forks). The denylist check did not run."
+            exit 0
+          fi
+          printf '%s\n' "$PUBLIC_DENYLIST" > "$RUNNER_TEMP/denylist"
+          export DENYLIST_FILE="$RUNNER_TEMP/denylist"
+          sh scripts/denylist-check.sh tree
+          sh scripts/denylist-check.sh history
