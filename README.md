@@ -98,6 +98,8 @@ If someone edited the entry in the meantime, the proposal is rejected as stale i
 - [Resources and prompts](docs/resources-and-prompts.md): entries as attachable resources and playbooks as slash commands
 - [Extending Pocket](docs/extending.md): new types, tools, search backends, using it as a library
 - [Secret scanning for all your repos](docs/gitleaks-for-all-repos.md)
+- [Publishing](docs/publishing.md): npm and the MCP Registry
+- [Reverse engineering](docs/reverse-engineering.md): pairing Pocket with REA, and importing its skills
 - [Content sources](docs/content-sources.md): open material worth importing, with licenses
 - [Roadmap](ROADMAP.md): what may come next, and why
 

@@ -1,0 +1,57 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.gitSITTI/pocket",
+  "title": "Pocket",
+  "description": "Knowledge base of Markdown files in git. Agents search and read; writes wait for human approval.",
+  "websiteUrl": "https://github.com/gitSITTI/Pocket",
+  "repository": {
+    "url": "https://github.com/gitSITTI/Pocket",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "pocket-bok",
+      "version": "0.1.0",
+      "runtimeHint": "npx",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "POCKET_CONFIG",
+          "description": "Path to pocket.config.json, which lists your content folders (layers). Without it Pocket reads ./content.",
+          "format": "filepath",
+          "isRequired": false
+        },
+        {
+          "name": "POCKET_CONTENT_DIR",
+          "description": "A single content folder, used only when there is no config file.",
+          "format": "filepath",
+          "isRequired": false
+        },
+        {
+          "name": "POCKET_PROPOSALS_DIR",
+          "description": "Where proposals from agents are written for you to review. Default .pocket/proposals.",
+          "format": "filepath",
+          "isRequired": false
+        },
+        {
+          "name": "POCKET_READ_ONLY",
+          "description": "Set to 1 and the server offers no write tools at all.",
+          "format": "string",
+          "choices": ["1"],
+          "isRequired": false
+        },
+        {
+          "name": "POCKET_WATCH_INTERVAL_MS",
+          "description": "How often, in milliseconds, to check for changed entries and tell the client. Default 5000; 0 turns it off.",
+          "format": "number",
+          "isRequired": false
+        }
+      ]
+    }
+  ]
+}

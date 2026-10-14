@@ -38,6 +38,7 @@ Pocket is a thin layer over a folder of Markdown files.
 | `src/server.ts` | Executable entry point for the MCP server (stdio) |
 | `src/cli.ts` | Executable entry point for the human CLI |
 | `src/index.ts` | Public API when using Pocket as a library |
+| `scripts/registry-metadata.mjs` | Checks `package.json` against `server.json` for the MCP Registry; used by the tests and the publish workflow |
 
 ## Decisions worth knowing
 

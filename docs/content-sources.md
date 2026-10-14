@@ -23,6 +23,10 @@ CC-BY content requires attribution. Record the author, title, source URL and lic
 - **[architecture-decision-record templates](https://github.com/joelparkerhenderson/architecture-decision-record):** the repository links to a LICENSE.md, but the license type was not confirmed. Read it first. Individual templates it lists (such as MADR) may have their own terms.
 - **Exercism exercise descriptions:** the repository is MIT, but whether the descriptions carry a separate Creative Commons license was not confirmed.
 
+## Tools that pair with Pocket
+
+- [morluto/rea](https://github.com/morluto/rea) (MIT): an MCP server for reverse engineering binaries, JavaScript and Electron apps, .NET assemblies and websites. It produces evidence; Pocket keeps the approved conclusions. See [reverse-engineering.md](reverse-engineering.md).
+
 ## Datasets for testing, not for bundling
 
 An aggregate dataset's license does not relicense the items inside it. Use these to test retrieval and review tooling, not as shipped content.

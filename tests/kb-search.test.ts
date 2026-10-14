@@ -133,9 +133,18 @@ describe("bundled examples", () => {
       "library",
       "pipeline",
       "process",
+      "process",
+      "process",
       "script",
       "skill",
     ]);
+  });
+
+  it("include process entries on reverse engineering and writing up finished work", () => {
+    const config = loadConfig({ cwd: resolve("."), env: { POCKET_CONTENT_DIR: "examples/content" } });
+    const kb = new KnowledgeBase(config);
+    expect(kb.search("reverse engineer")[0]?.entry.id).toBe("example-reverse-engineering");
+    expect(kb.getEntry("example-process-audit")?.links).toContain("example-reverse-engineering");
   });
 
   it("are findable by search", () => {

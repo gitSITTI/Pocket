@@ -3,6 +3,15 @@
   "version": "0.1.0",
   "description": "Pocket: a Pocket Body of Knowledge MCP server. File-based, git-friendly, layered, with human-approved writes.",
   "license": "Apache-2.0",
+  "mcpName": "io.github.gitSITTI/pocket",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gitSITTI/Pocket.git"
+  },
+  "homepage": "https://github.com/gitSITTI/Pocket#readme",
+  "bugs": {
+    "url": "https://github.com/gitSITTI/Pocket/issues"
+  },
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -14,6 +23,7 @@
     "./schema/entry.schema.json": "./schema/entry.schema.json"
   },
   "bin": {
+    "pocket-bok": "dist/server.js",
     "pocket-mcp": "dist/server.js",
     "pocket": "dist/cli.js"
   },
@@ -34,7 +44,10 @@
     "test": "vitest run",
     "start": "node dist/server.js",
     "validate": "node dist/cli.js validate",
-    "setup:hooks": "sh scripts/setup-hooks.sh"
+    "setup:hooks": "sh scripts/setup-hooks.sh",
+    "registry:check": "node scripts/registry-metadata.mjs check",
+    "version": "node scripts/registry-metadata.mjs sync && git add server.json",
+    "prepublishOnly": "npm run build && npm run registry:check"
   },
   "keywords": [
     "mcp",

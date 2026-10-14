@@ -47,6 +47,8 @@ See the [resources](https://modelcontextprotocol.io/specification/2025-06-18/ser
 
 ## 4. Publish to the MCP Registry
 
+Status: ready to release, not yet published ([#6](https://github.com/gitSITTI/Pocket/issues/6)). The metadata, checks and workflow are in place; the first release needs an npm account and token. See [docs/publishing.md](docs/publishing.md). The `.mcpb` bundle is not done.
+
 - Add `mcpName` and `repository` to `package.json`, and a `server.json`.
 - Publish from GitHub Actions with the `mcp-publisher` tool.
 - Optionally ship a `.mcpb` bundle with [@anthropic-ai/mcpb](https://www.npmjs.com/package/@anthropic-ai/mcpb) (MIT).
