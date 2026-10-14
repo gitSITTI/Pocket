@@ -1,5 +1,5 @@
 // Public API for building on pocket.
-export { DEFAULT_PROMPT_TYPES, loadConfig, type PocketConfig, type LayerConfig, type LoadConfigOptions } from "./config.js";
+export { DEFAULT_PROMPT_TYPES, loadConfig, type PocketConfig, type LayerConfig, type LoadConfigOptions, type SemanticConfig } from "./config.js";
 export { KnowledgeBase, summarize, type EntryFilter, type EntrySummary } from "./kb.js";
 export { splitFrontmatter, serializeEntry } from "./frontmatter.js";
 export { createChangeNotifier, createServer, watchForChanges } from "./mcp.js";
@@ -30,4 +30,6 @@ export {
   type SkillDocument,
 } from "./skills.js";
 export { SearchIndex, tokenize, type SearchHit } from "./search.js";
+export { SemanticSearch, embeddingText, fuse, type Embedder, type SemanticOptions, type SemanticResult } from "./semantic.js";
+export { semanticSearchFor, transformersEmbedder } from "./embedder.js";
 export { DEFAULT_TYPES, ENTRY_STATUSES, type Entry, type EntryMeta, type EntryStatus, type Issue, type TypeDef } from "./types.js";

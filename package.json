@@ -46,6 +46,7 @@
     "validate": "node dist/cli.js validate",
     "setup:hooks": "sh scripts/setup-hooks.sh",
     "registry:check": "node scripts/registry-metadata.mjs check",
+    "smoke:semantic": "node scripts/semantic-smoke.mjs",
     "version": "node scripts/registry-metadata.mjs sync && git add server.json",
     "prepublishOnly": "npm run build && npm run registry:check"
   },
@@ -53,12 +54,22 @@
     "mcp",
     "model-context-protocol",
     "knowledge-base",
-    "body-of-knowledge"
+    "body-of-knowledge",
+    "semantic-search",
+    "embeddings"
   ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.1",
     "yaml": "^2.9.1",
     "zod": "^4.6.7"
+  },
+  "peerDependencies": {
+    "@huggingface/transformers": "^4.3.1"
+  },
+  "peerDependenciesMeta": {
+    "@huggingface/transformers": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

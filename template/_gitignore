@@ -7,3 +7,6 @@
 !.env.example
 
 .DS_Store
+
+# Installed by `npm install @huggingface/transformers` when search by meaning is turned on
+node_modules/

@@ -4,6 +4,10 @@ export interface SearchHit {
   entry: Entry;
   score: number;
   snippet: string;
+  /** Set by semantic search: how this entry was found. */
+  via?: "keyword" | "meaning" | "both";
+  /** Set by semantic search when the entry matched by meaning: cosine similarity, -1 to 1. */
+  similarity?: number;
 }
 
 export interface SearchOptions {

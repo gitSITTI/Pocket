@@ -18,6 +18,7 @@ If neither exists, Pocket uses a single layer: the directory in `POCKET_CONTENT_
   "proposalsDir": "./.pocket/proposals",
   "readOnly": false,
   "promptTypes": ["process"],
+  "semanticSearch": false,
   "types": [
     {
       "name": "runbook",
@@ -36,6 +37,7 @@ Relative paths are resolved from the folder containing the config file.
 | `proposalsDir` | Where proposals are written. Default `.pocket/proposals`. |
 | `readOnly` | When true, `add_entry` and `update_entry` are not offered. |
 | `promptTypes` | Entry types offered as MCP prompts (slash commands), active entries only. Default `["process"]`. See [resources-and-prompts.md](resources-and-prompts.md). |
+| `semanticSearch` | `true`, `false` (default) or an object (`model`, `dtype`, `cacheDir`, `minSimilarity`). Also match entries by meaning, using a small model on this machine. Needs an optional package. See [semantic-search.md](semantic-search.md). |
 | `types` | Extra entry types, or overrides of built-in ones. `requiredFields` lists frontmatter keys that must be present for that type. |
 
 ## Layers

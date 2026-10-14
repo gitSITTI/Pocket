@@ -4,7 +4,8 @@ import { resolve } from "node:path";
 import { createInterface } from "node:readline/promises";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
-import { loadConfig } from "./config.js";
+import { loadConfig, type PocketConfig } from "./config.js";
+import { semanticSearchFor } from "./embedder.js";
 import { serializeEntry } from "./frontmatter.js";
 import { KnowledgeBase } from "./kb.js";
 import { ProposalStore, approveProposal, rejectProposal, type Proposal } from "./proposals.js";
@@ -21,6 +22,8 @@ Content
   validate                      Check every entry. Exits 1 on errors (--strict: on warnings too).
   list [--type t] [--tag t] [--status s] [--scope s]
   search <query> [--type t] [--limit n]
+                                Words and, when "semanticSearch" is on in the config, meaning too.
+  index                         Prepare search by meaning now (the first run downloads a model).
   show <id>                     Print one entry.
   types                         List entry types and layers.
   init <dir>                    Create a new content repo from the bundled template.
@@ -80,6 +83,13 @@ function parseStatus(value: string | undefined): EntryStatus | undefined {
 function open() {
   const config = loadConfig(values.config ? { configPath: values.config } : {});
   return { config, kb: new KnowledgeBase(config), store: new ProposalStore(config.proposalsDir) };
+}
+
+/** Search by meaning for this run. A failure to run is reported once, by the command itself, so only cache problems are logged. */
+function openSemantic(config: PocketConfig, kb: KnowledgeBase) {
+  return semanticSearchFor(kb, config, (message, kind) => {
+    if (kind === "cache") console.error(`pocket: ${message}`);
+  });
 }
 
 async function confirm(question: string): Promise<boolean> {
@@ -264,12 +274,47 @@ async function main(): Promise<void> {
     case "search": {
       const query = rest.join(" ").trim();
       if (!query) fail("Usage: pocket search <query>");
-      const { kb } = open();
+      const { config, kb } = open();
       const limit = values.limit ? Number.parseInt(values.limit, 10) : 10;
-      const hits = kb.search(query, values.type ? { type: values.type } : {}, Number.isFinite(limit) ? limit : 10);
-      if (values.json) return console.log(JSON.stringify(hits.map((h) => ({ id: h.entry.id, score: h.score, title: h.entry.title, snippet: h.snippet })), null, 2));
+      const count = Number.isFinite(limit) ? limit : 10;
+      const filter = values.type ? { type: values.type } : {};
+      const semantic = openSemantic(config, kb);
+      // A one-off command has no later chance to use background work, so wait for the vectors.
+      const { hits, note } = semantic ? await semantic.search(query, filter, count, { wait: true }) : { hits: kb.search(query, filter, count), note: undefined };
+      if (note) console.error(note);
+      if (values.json) {
+        return console.log(
+          JSON.stringify(
+            hits.map((h) => ({
+              id: h.entry.id,
+              score: h.score,
+              title: h.entry.title,
+              snippet: h.snippet,
+              ...(h.via ? { matched: h.via } : {}),
+              ...(h.similarity !== undefined ? { similarity: h.similarity } : {}),
+            })),
+            null,
+            2,
+          ),
+        );
+      }
       if (hits.length === 0) return console.log("No matches.");
-      for (const hit of hits) console.log(`${hit.score.toFixed(2).padStart(6)}  ${hit.entry.id}  ${hit.entry.title}\n        ${hit.snippet}`);
+      for (const hit of hits) {
+        const how = hit.via ? `  (${hit.via === "both" ? "words + meaning" : hit.via === "meaning" ? "meaning" : "words"})` : "";
+        console.log(`${hit.score.toFixed(2).padStart(6)}  ${hit.entry.id}  ${hit.entry.title}${how}\n        ${hit.snippet}`);
+      }
+      return;
+    }
+
+    case "index": {
+      const { config, kb } = open();
+      const semantic = openSemantic(config, kb);
+      if (!semantic) fail('Search by meaning is not turned on. Add "semanticSearch": true to the config file (see docs/semantic-search.md).');
+      console.error("Preparing search by meaning. The first run downloads the model (about 23 MB) and can take a minute.");
+      await semantic.sync();
+      const { total, embedded, failure } = semantic.status();
+      if (failure) fail(`Could not prepare search by meaning: ${failure}`);
+      console.log(`${embedded} of ${total} entries are ready for search by meaning.`);
       return;
     }
 

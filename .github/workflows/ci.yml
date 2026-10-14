@@ -27,6 +27,26 @@ jobs:
       - name: Validate the example content
         run: POCKET_CONTENT_DIR=examples/content node dist/cli.js validate --strict
 
+  semantic:
+    name: Search by meaning (real model runtime)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # The package is optional, so the jobs above run without it. This job installs it (CPU only:
+      # skipping the install scripts avoids a large GPU download) and runs the real thing against
+      # a tiny test model. It is pinned to the version that was tested; peerDependencies allows newer.
+      - name: Install the optional package
+        run: ONNXRUNTIME_NODE_INSTALL=skip npm install --no-save --ignore-scripts @huggingface/transformers@4.3.1
+      - run: POCKET_REQUIRE_SEMANTIC_TESTS=1 npm test
+      - run: npm run build
+      - name: Search by meaning through the built command line and server
+        run: npm run smoke:semantic
+
   gitleaks:
     runs-on: ubuntu-latest
     env:

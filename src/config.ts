@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { z } from "zod";
 import { ID_PATTERN } from "./schema.js";
@@ -24,9 +24,26 @@ export interface PocketConfig {
    * Defaults to ["process"] when not set.
    */
   promptTypes?: string[];
+  /** Optional search by meaning. Absent unless "semanticSearch" is set in the config file. */
+  semantic?: SemanticConfig;
+}
+
+export interface SemanticConfig {
+  /** A Hugging Face model id, or the absolute path of a folder holding a downloaded model. */
+  model: string;
+  /** Weight precision for transformers.js. "q8" is the small 8-bit build. */
+  dtype: string;
+  /** Where vectors and downloaded models are cached. Not committed. */
+  cacheDir: string;
+  /** Entries that match only by meaning are dropped below this cosine similarity. */
+  minSimilarity: number;
+  /** The folder the config file is in; used to find the optional package next to the knowledge base. */
+  baseDir: string;
 }
 
 export const DEFAULT_PROMPT_TYPES = ["process"];
+export const DEFAULT_EMBEDDING_MODEL = "Xenova/all-MiniLM-L6-v2";
+const EMBEDDING_DTYPES = ["fp32", "fp16", "q8", "int8", "uint8", "q4", "bnb4", "q4f16"] as const;
 
 const configSchema = z.object({
   contentDirs: z
@@ -40,6 +57,17 @@ const configSchema = z.object({
   proposalsDir: z.string().min(1).optional(),
   readOnly: z.boolean().default(false),
   promptTypes: z.array(z.string().regex(ID_PATTERN, "prompt type names use lowercase letters, digits and hyphens")).default(DEFAULT_PROMPT_TYPES),
+  semanticSearch: z
+    .union([
+      z.boolean(),
+      z.strictObject({
+        model: z.string().min(1).default(DEFAULT_EMBEDDING_MODEL),
+        dtype: z.enum(EMBEDDING_DTYPES).default("q8"),
+        cacheDir: z.string().min(1).optional(),
+        minSimilarity: z.number().min(0).max(1).default(0),
+      }),
+    ])
+    .default(false),
   types: z
     .array(
       z.object({
@@ -112,11 +140,29 @@ export function loadConfig(options: LoadConfigOptions = {}): PocketConfig {
   if (duplicate) throw new Error(`Invalid config ${configPath}: duplicate scope "${duplicate}"`);
 
   const configDir = dirname(configPath);
+  const semantic = semanticConfig(parsed.data.semanticSearch, configDir);
   return {
     contentDirs: parsed.data.contentDirs.map((d) => ({ scope: d.scope, path: resolve(configDir, d.path) })),
     proposalsDir: resolve(configDir, env.POCKET_PROPOSALS_DIR ?? parsed.data.proposalsDir ?? ".pocket/proposals"),
     readOnly: parsed.data.readOnly || readOnlyFromEnv,
     types: mergeTypes(parsed.data.types),
     promptTypes: parsed.data.promptTypes,
+    ...(semantic ? { semantic } : {}),
+  };
+}
+
+function semanticConfig(setting: z.infer<typeof configSchema>["semanticSearch"], configDir: string): SemanticConfig | undefined {
+  if (setting === false) return undefined;
+  const options = setting === true ? { model: DEFAULT_EMBEDDING_MODEL, dtype: "q8", minSimilarity: 0, cacheDir: undefined } : setting;
+  // A folder next to the config file wins over a Hugging Face id of the same shape, so a model can be
+  // downloaded once and used offline.
+  const folder = resolve(configDir, options.model);
+  const isFolder = existsSync(folder) && statSync(folder).isDirectory();
+  return {
+    model: isFolder ? folder : options.model,
+    dtype: options.dtype,
+    cacheDir: resolve(configDir, options.cacheDir ?? ".pocket/embeddings"),
+    minSimilarity: options.minSimilarity,
+    baseDir: configDir,
   };
 }

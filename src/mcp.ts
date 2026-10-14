@@ -6,6 +6,7 @@ import { DEFAULT_PROMPT_TYPES } from "./config.js";
 import { serializeEntry } from "./frontmatter.js";
 import { KnowledgeBase, summarize } from "./kb.js";
 import { ProposalStore, evidenceSchema, proposeAdd, proposeUpdate, type ProposeResult } from "./proposals.js";
+import type { SemanticSearch } from "./semantic.js";
 import { ENTRY_STATUSES, type Entry, type EntryStatus } from "./types.js";
 
 /** Resources are addressed as pocket://entry/<id>. */
@@ -84,8 +85,11 @@ function proposalResult(result: ProposeResult) {
 
 const statusField = z.enum(ENTRY_STATUSES);
 
-/** Build the MCP server. Read tools are always on; write tools only propose changes. */
-export function createServer(kb: KnowledgeBase, store: ProposalStore): McpServer {
+/**
+ * Build the MCP server. Read tools are always on; write tools only propose changes.
+ * With `semantic`, the search tool also matches by meaning (see docs/semantic-search.md).
+ */
+export function createServer(kb: KnowledgeBase, store: ProposalStore, semantic?: SemanticSearch): McpServer {
   const server = new McpServer({ name: "pocket", version: packageVersion() });
   const readOnlyAnnotations = { readOnlyHint: true, idempotentHint: true, openWorldHint: false };
 
@@ -93,8 +97,9 @@ export function createServer(kb: KnowledgeBase, store: ProposalStore): McpServer
     "search",
     {
       title: "Search the body of knowledge",
-      description:
-        "Full-text search across all entries, best matches first. Titles and tags count more than body text. Narrow with type, tag, status or scope.",
+      description: semantic
+        ? "Search all entries by words and by meaning, best matches first. Titles and tags count more than body text. Narrow with type, tag, status or scope."
+        : "Full-text search across all entries, best matches first. Titles and tags count more than body text. Narrow with type, tag, status or scope.",
       inputSchema: {
         query: z.string().min(1).describe("What to look for, in plain words."),
         type: z.string().optional().describe("Only this entry type. See list_types."),
@@ -112,14 +117,17 @@ export function createServer(kb: KnowledgeBase, store: ProposalStore): McpServer
         ...(status ? { status } : {}),
         ...(scope ? { scope } : {}),
       };
-      const hits = kb.search(query, filter, limit);
+      const { hits, note } = semantic ? await semantic.search(query, filter, limit) : { hits: kb.search(query, filter, limit), note: undefined };
       return json({
         count: hits.length,
         results: hits.map((hit) => ({
           ...summarize(hit.entry),
           score: Math.round(hit.score * 1000) / 1000,
           snippet: hit.snippet,
+          ...(hit.via ? { matched: hit.via } : {}),
+          ...(hit.similarity !== undefined ? { similarity: Math.round(hit.similarity * 1000) / 1000 } : {}),
         })),
+        ...(note ? { note } : {}),
       });
     },
   );

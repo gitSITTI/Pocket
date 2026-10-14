@@ -5,7 +5,7 @@
 - **Files are the source of truth.** Entries are Markdown with a little YAML. They diff, review and merge like code.
 - **Agents propose, humans approve.** The server can search and read freely, but every change an agent suggests waits for a person to approve it.
 - **Layered.** Keep global knowledge and project knowledge in separate folders; the more specific layer wins.
-- **Small base, easy to extend.** No database, no native dependencies. Add your own entry types, tools or search backend.
+- **Small base, easy to extend.** No database, no native dependencies. Add your own entry types, tools or search backend. Search by meaning is an optional extra, off by default.
 
 ## Quickstart
 
@@ -46,7 +46,7 @@ Run `npm link` if you want the `pocket` command on your PATH. Docker works too; 
 
 | Tool | What it does |
 | --- | --- |
-| `search` | Ranked full-text search, filterable by type, tag, status and layer |
+| `search` | Ranked full-text search, filterable by type, tag, status and layer. With [search by meaning](docs/semantic-search.md) on, it also matches by meaning |
 | `get_entry` | Read one entry in full |
 | `list_entries` | List summaries, optionally filtered |
 | `list_types` | Describe entry types, counts and layers |
@@ -96,6 +96,7 @@ If someone edited the entry in the meantime, the proposal is rejected as stale i
 - [Approval flow](docs/approval-flow.md): proposals, review, and what is and is not guaranteed
 - [Agent Skills](docs/agent-skills.md): export skill entries and import skill folders as proposals
 - [Resources and prompts](docs/resources-and-prompts.md): entries as attachable resources and playbooks as slash commands
+- [Search by meaning](docs/semantic-search.md): optional local embeddings, what they cost, and what is not done
 - [Extending Pocket](docs/extending.md): new types, tools, search backends, using it as a library
 - [Secret scanning for all your repos](docs/gitleaks-for-all-repos.md)
 - [Publishing](docs/publishing.md): npm and the MCP Registry

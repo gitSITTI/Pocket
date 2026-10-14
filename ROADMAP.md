@@ -56,11 +56,14 @@ Status: ready to release, not yet published ([#6](https://github.com/gitSITTI/Po
 
 ## 5. Optional semantic search
 
+Status: done, in the unreleased version ([#7](https://github.com/gitSITTI/Pocket/issues/7)), except the reranker. See [docs/semantic-search.md](docs/semantic-search.md).
+
 An extension, off by default, so the core keeps its zero-dependency search.
 
-- Local embeddings with [@huggingface/transformers](https://www.npmjs.com/package/@huggingface/transformers) (Apache-2.0) and a small ONNX model. Candidates, all tagged Apache-2.0 on Hugging Face: [granite-embedding-30m-english](https://hf.co/ibm-granite/granite-embedding-30m-english) and [jina-embeddings-v2-small-en](https://hf.co/jinaai/jina-embeddings-v2-small-en).
-- Optional reranker: [gte-reranker-modernbert-base](https://hf.co/Alibaba-NLP/gte-reranker-modernbert-base) or the smaller [ettin-reranker-17m-v1](https://hf.co/cross-encoder/ettin-reranker-17m-v1).
-- BM25 and vector results merged by rank, with vectors cached in a plain file that is not committed.
+- Done: local embeddings with [@huggingface/transformers](https://www.npmjs.com/package/@huggingface/transformers) (Apache-2.0, an optional peer dependency) and a small ONNX model, [all-MiniLM-L6-v2](https://hf.co/Xenova/all-MiniLM-L6-v2) (Apache-2.0) by default. Any plain feature-extraction model works, or a model folder for offline use.
+- Done: BM25 and vector results merged by rank, with vectors cached in a file that is not committed.
+- Not done: granite-embedding-30m-english and jina-embeddings-v2-small-en were candidates, but they need a different loading path (granite) or custom code (jina), so they are not wired in.
+- Not done: the optional reranker ([gte-reranker-modernbert-base](https://hf.co/Alibaba-NLP/gte-reranker-modernbert-base) or the smaller [ettin-reranker-17m-v1](https://hf.co/cross-encoder/ettin-reranker-17m-v1)). It should be added after the evals in item 6 can show whether it helps.
 - Not planned for now: sqlite-vec. It is at v0.1 and needs a native extension.
 
 ## 6. Retrieval and skill evals

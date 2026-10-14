@@ -52,6 +52,6 @@ Pocket is a thin layer over a folder of Markdown files.
 
 **Optimistic concurrency.** Every entry has a `version`. An update proposal records the version it was based on, and approval fails if the entry has moved on.
 
-**No native dependencies.** Search is a small in-memory BM25 implementation, so installing and running needs only Node. For very large knowledge bases, or semantic search, swap the index (see [extending.md](extending.md)).
+**No native dependencies.** Search is a small in-memory BM25 implementation, so installing and running needs only Node. Search by meaning is an optional extra (`semanticSearch` in the config): it lives in `src/semantic.ts` and `src/embedder.ts`, loads the model package only when used, merges its ranking with the BM25 ranking, and falls back to BM25 alone whenever the model cannot run. See [semantic-search.md](semantic-search.md). For very large knowledge bases, swap the index (see [extending.md](extending.md)).
 
 **stdout is the protocol.** The server only logs to stderr.

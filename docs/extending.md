@@ -54,7 +54,9 @@ Rule for write-capable tools: they must go through the proposal store. Do not wr
 - a constructor that takes the effective `Entry[]`
 - `search(query, { limit, filter }): SearchHit[]`
 
-Replace the class used in `kb.ts` with one backed by SQLite full-text search, embeddings, or an external service. The files stay the source of truth; the index is always rebuilt from them.
+Replace the class used in `kb.ts` with one backed by SQLite full-text search or an external service. The files stay the source of truth; the index is always rebuilt from them.
+
+Search by meaning does not need a swap: it sits on top of the word index. Turn it on with `semanticSearch` in the config, or give `SemanticSearch` your own `Embedder`. See [semantic-search.md](semantic-search.md).
 
 ## Use Pocket as a library
 
