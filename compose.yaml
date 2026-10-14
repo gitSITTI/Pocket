@@ -1,0 +1,14 @@
+# Example: run the server against your own content repo.
+# Content is mounted read-only, so the server physically cannot change approved
+# knowledge. It can only write proposals, into a separate directory.
+#
+#   docker compose run --rm -i pocket
+#
+# Approve proposals from the host with the `pocket` CLI (see docs/approval-flow.md).
+services:
+  pocket:
+    build: .
+    stdin_open: true
+    volumes:
+      - ./examples/content:/data/content:ro
+      - ./.pocket/proposals:/data/proposals

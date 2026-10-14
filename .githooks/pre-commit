@@ -1,0 +1,12 @@
+#!/bin/sh
+# Blocks a commit if the staged changes contain a secret.
+# Enable once per clone with:  sh scripts/setup-hooks.sh
+# Skip in an emergency with:   git commit --no-verify   (CI scans again anyway)
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "gitleaks is not installed, so this commit was blocked." >&2
+  echo "Install it (https://github.com/gitleaks/gitleaks#installing) and try again." >&2
+  exit 1
+fi
+
+exec gitleaks git --pre-commit --staged --redact --verbose --config .gitleaks.toml

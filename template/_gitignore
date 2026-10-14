@@ -1,0 +1,9 @@
+# Pending proposals are working files, not approved knowledge.
+/.pocket/
+
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+
+.DS_Store

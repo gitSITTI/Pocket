@@ -1,0 +1,15 @@
+# Gitleaks configuration. Copy this file into any repo to get the same secret scanning.
+# Docs: https://github.com/gitleaks/gitleaks
+
+title = "gitleaks config"
+
+[extend]
+# Start from gitleaks' built-in rules (cloud keys, tokens, private keys, and so on).
+useDefault = true
+
+[allowlist]
+description = "Files that are known not to hold real secrets"
+paths = [
+  # Lockfiles contain integrity hashes that look like high-entropy secrets.
+  '''package-lock\.json$''',
+]

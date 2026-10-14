@@ -1,0 +1,4 @@
+{
+  "contentDirs": [{ "scope": "main", "path": "./content" }],
+  "proposalsDir": "./.pocket/proposals"
+}

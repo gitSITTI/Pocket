@@ -1,0 +1,15 @@
+{
+  "contentDirs": [
+    { "scope": "global", "path": "./content/global" },
+    { "scope": "project", "path": "./content/project" }
+  ],
+  "proposalsDir": "./.pocket/proposals",
+  "readOnly": false,
+  "types": [
+    {
+      "name": "runbook",
+      "description": "Step-by-step operational procedure for a known situation.",
+      "requiredFields": ["owner"]
+    }
+  ]
+}

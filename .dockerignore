@@ -1,0 +1,12 @@
+node_modules
+dist
+.git
+.github
+.env
+.env.*
+!.env.example
+/content
+/.pocket
+/pocket.config.json
+coverage
+*.log
