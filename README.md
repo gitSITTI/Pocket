@@ -56,6 +56,8 @@ Run `npm link` if you want the `pocket` command on your PATH. Docker works too; 
 
 Set `POCKET_READ_ONLY=1` and the two write tools are not offered at all.
 
+Proposals can carry a `source`, a `license` and `evidence` (the task, the outcome and a link to a trace). The review screen shows them, labels evidence as the proposer's claim, and flags anything that deserves a closer look.
+
 ## What an entry looks like
 
 ```markdown
@@ -73,6 +75,8 @@ links: [release-pipeline]
 The body, in Markdown. Refer to other entries with [[release-pipeline]].
 ```
 
+Optional fields record where content came from: `source`, `license` (for example `CC-BY-4.0`) and `sourceHash`.
+
 Built-in types: `library`, `process`, `skill`, `script`, `pipeline`, `contract`, `lesson-learned`. Add your own in the config file. The frontmatter rules are published as [schema/entry.schema.json](schema/entry.schema.json) for editor support.
 
 ## How changes get in
@@ -88,6 +92,7 @@ If someone edited the entry in the meantime, the proposal is rejected as stale i
 - [Architecture](docs/architecture.md): how the pieces fit together
 - [Configuration](docs/configuration.md): config file, environment variables, layers, Docker
 - [Approval flow](docs/approval-flow.md): proposals, review, and what is and is not guaranteed
+- [Agent Skills](docs/agent-skills.md): export skill entries and import skill folders as proposals
 - [Extending Pocket](docs/extending.md): new types, tools, search backends, using it as a library
 - [Secret scanning for all your repos](docs/gitleaks-for-all-repos.md)
 - [Content sources](docs/content-sources.md): open material worth importing, with licenses

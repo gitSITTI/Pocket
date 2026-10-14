@@ -2,6 +2,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { basename, join, relative } from "node:path";
 import type { PocketConfig, LayerConfig } from "./config.js";
 import { splitFrontmatter } from "./frontmatter.js";
+import { lintEntry } from "./lint.js";
 import { TypeRegistry, parseMeta } from "./schema.js";
 import { SearchIndex, type SearchHit } from "./search.js";
 import type { Entry, EntryStatus, Issue } from "./types.js";
@@ -154,6 +155,16 @@ export class KnowledgeBase {
     }
 
     for (const entry of effective.values()) {
+      for (const finding of lintEntry(entry, entry.body)) {
+        issues.push({
+          level: "warning",
+          scope: entry.scope,
+          file: relative(this.layer(entry.scope)?.path ?? "", entry.filePath),
+          id: entry.id,
+          message: `${finding.field} ${finding.message}`,
+        });
+      }
+
       // `links` in the frontmatter is the machine-readable list; [[id]] in the body is a
       // convention for readers. Both are checked so neither silently rots.
       const bodyLinks = [...entry.body.matchAll(/\[\[([a-z0-9][a-z0-9-]*)\]\]/g)].map((m) => m[1]!);

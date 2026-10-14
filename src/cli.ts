@@ -5,10 +5,12 @@ import { createInterface } from "node:readline/promises";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { loadConfig } from "./config.js";
-import { diffLines } from "./diff.js";
 import { serializeEntry } from "./frontmatter.js";
 import { KnowledgeBase } from "./kb.js";
 import { ProposalStore, approveProposal, rejectProposal, type Proposal } from "./proposals.js";
+import { renderProposal } from "./review.js";
+import { makeVisible } from "./sanitize.js";
+import { exportSkills, importSkills } from "./skills.js";
 import { ENTRY_STATUSES, type EntryStatus } from "./types.js";
 
 const HELP = `pocket: manage a body-of-knowledge content repo
@@ -22,6 +24,12 @@ Content
   show <id>                     Print one entry.
   types                         List entry types and layers.
   init <dir>                    Create a new content repo from the bundled template.
+
+Agent Skills (open format: a folder with a SKILL.md, see https://agentskills.io)
+  export skills <dir> [--type t] [--status s | --all]
+                                Write each skill entry to <dir>/<id>/SKILL.md (active entries by default).
+  import skills <dir> --source <where from> [--license id] [--type t] [--tag a,b] [--scope s] [--dry-run]
+                                Turn skill folders into proposals. A person still approves each one.
 
 Proposals (human review of changes suggested by agents)
   proposals list
@@ -45,6 +53,10 @@ const { values, positionals } = parseArgs({
     scope: { type: "string" },
     limit: { type: "string" },
     note: { type: "string" },
+    source: { type: "string" },
+    license: { type: "string" },
+    all: { type: "boolean", default: false },
+    "dry-run": { type: "boolean", default: false },
     yes: { type: "boolean", default: false },
     strict: { type: "boolean", default: false },
     json: { type: "boolean", default: false },
@@ -82,28 +94,7 @@ async function confirm(question: string): Promise<boolean> {
 }
 
 function printProposal(kb: KnowledgeBase, proposal: Proposal): void {
-  console.log(`Proposal   ${proposal.proposalId} (${proposal.state})`);
-  console.log(`Action     ${proposal.action} entry "${proposal.entryId}" in scope "${proposal.scope}"`);
-  console.log(`Proposed   by ${proposal.proposedBy} at ${proposal.createdAt}`);
-  console.log(`Rationale  ${proposal.rationale}`);
-  if (proposal.decisionNote) console.log(`Decision   ${proposal.decisionNote}`);
-  console.log("");
-
-  const current = kb.getEntry(proposal.entryId);
-  const proposedMeta = serializeEntry(proposal.entry.meta, "").trimEnd();
-  if (proposal.action === "add" || !current) {
-    console.log(proposedMeta);
-    console.log("");
-    console.log(proposal.entry.body);
-    return;
-  }
-
-  const metaChanges = diffLines(serializeEntry(current, "").trimEnd(), proposedMeta).filter((l) => !l.startsWith(" "));
-  const bodyChanges = diffLines(current.body.trim(), proposal.entry.body).filter((l) => !l.startsWith(" "));
-  console.log(`Changes against version ${current.version}:`);
-  console.log(metaChanges.length > 0 ? metaChanges.join("\n") : "(no metadata changes)");
-  console.log("");
-  console.log(bodyChanges.length > 0 ? bodyChanges.join("\n") : "(no body changes)");
+  console.log(renderProposal(kb, proposal));
 }
 
 async function proposalsCommand(args: string[]): Promise<void> {
@@ -115,7 +106,9 @@ async function proposalsCommand(args: string[]): Promise<void> {
     if (values.json) return console.log(JSON.stringify(pending, null, 2));
     if (pending.length === 0) return console.log("No pending proposals.");
     for (const p of pending) {
-      console.log(`${p.proposalId}  ${p.action.padEnd(6)} ${p.entryId}  (by ${p.proposedBy}) ${p.rationale}`);
+      // proposedBy and rationale come from the proposer, so show them safely on one line.
+      const line = `${p.proposalId}  ${p.action.padEnd(6)} ${p.entryId}  (by ${p.proposedBy}) ${p.rationale}`;
+      console.log(makeVisible(line.replace(/\s+/g, " ")).text);
     }
     return;
   }
@@ -177,6 +170,64 @@ async function main(): Promise<void> {
 
     case "proposals":
       return proposalsCommand(rest);
+
+    case "export": {
+      if (rest[0] !== "skills" || !rest[1]) fail("Usage: pocket export skills <dir> [--type t] [--status s | --all]");
+      const { kb } = open();
+      const status = parseStatus(values.status);
+      const items = exportSkills(kb, resolve(rest[1]), {
+        ...(values.type ? { type: values.type } : {}),
+        statuses: values.all ? "all" : status ? [status] : ["active"],
+      });
+      if (values.json) console.log(JSON.stringify(items, null, 2));
+      else {
+        for (const item of items) {
+          if (item.path) console.log(`wrote    ${item.path}`);
+          else console.log(`skipped  ${makeVisible(item.id).text}: ${makeVisible(item.errors.join("; ")).text}`);
+        }
+        const wrote = items.filter((item) => item.path).length;
+        console.log(items.length === 0 ? "No matching entries to export." : `${wrote} exported, ${items.length - wrote} skipped`);
+      }
+      if (items.some((item) => item.errors.length > 0)) process.exit(1);
+      return;
+    }
+
+    case "import": {
+      if (rest[0] !== "skills" || !rest[1]) fail("Usage: pocket import skills <dir> --source <where from> [--license id] [--tag a,b] [--dry-run]");
+      if (!values.source) fail("--source is required: say where these skills came from, for example the repository URL.");
+      const { kb, store } = open();
+      const tags = values.tag
+        ? values.tag
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean)
+        : undefined;
+      const dryRun = values["dry-run"] === true;
+      const items = importSkills(kb, store, resolve(rest[1]), {
+        source: values.source,
+        dryRun,
+        ...(values.license ? { license: values.license } : {}),
+        ...(values.type ? { type: values.type } : {}),
+        ...(values.scope ? { scope: values.scope } : {}),
+        ...(tags ? { tags } : {}),
+      });
+      if (values.json) console.log(JSON.stringify(items, null, 2));
+      else {
+        for (const item of items) {
+          const label = item.outcome === "proposed-update" ? "update" : item.outcome;
+          console.log(`${label.padEnd(10)} ${makeVisible(item.name).text}${item.proposalId ? `  ${item.proposalId}` : ""}`);
+          for (const error of item.errors) console.log(`           error: ${makeVisible(error).text}`);
+          for (const warning of item.warnings) console.log(`           note: ${makeVisible(warning).text}`);
+        }
+        const count = (outcome: string) => items.filter((item) => item.outcome === outcome).length;
+        console.log(
+          `${count("proposed")} new, ${count("proposed-update")} update(s), ${count("unchanged")} unchanged, ${count("invalid")} invalid`,
+        );
+        console.log(dryRun ? "Dry run: no proposals were created." : "Review with: pocket proposals list");
+      }
+      if (items.some((item) => item.outcome === "invalid")) process.exit(1);
+      return;
+    }
 
     case "validate": {
       const { kb } = open();

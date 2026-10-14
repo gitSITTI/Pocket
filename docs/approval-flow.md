@@ -5,13 +5,30 @@ Agents can read everything but cannot change approved knowledge. They can only p
 ## Lifecycle
 
 1. **Propose.** An agent calls `add_entry` or `update_entry`. Pocket validates the result (schema, entry type, required fields, links to a known id) and writes `<proposals dir>/p-<date>-<time>-<random>.json`. Invalid proposals are rejected immediately with the reasons, so the agent can fix and retry.
-2. **Review.** A person runs `pocket proposals list`, then `pocket proposals show <id>`. For updates, `show` prints only the changed lines of metadata and body.
+2. **Review.** A person runs `pocket proposals list`, then `pocket proposals show <id>`. For updates, `show` prints only the changed lines of metadata and body. See [what the reviewer sees](#what-the-reviewer-sees).
 3. **Decide.**
    - `pocket proposals approve <id>` shows the proposal again, asks for confirmation, then writes the entry file.
    - `pocket proposals reject <id> --note "why"` records the decision and writes nothing.
 4. **Commit.** Review the new or changed file with `git diff` and commit it.
 
 Decided proposals move to `<proposals dir>/archive/` with the time and any note, which gives you an audit trail.
+
+## What the reviewer sees
+
+`pocket proposals show` (and `approve`, which shows it again) prints:
+
+- **Source, license and hash.** Where the knowledge came from, what license it carries, and for imports the SHA-256 of the original. Missing values read `(none stated)`.
+- **Evidence.** An agent can attach `evidence` to `add_entry` and `update_entry`: the `task` it was doing, the `outcome`, and a `link` to a trace, log or commit. It is stored with the proposal (and kept in the archive), not written into the entry. It is labelled as written by the proposer, because Pocket does not check it.
+- **Look closely at.** Prompts for the reviewer, not verdicts:
+  - a new entry with no source, or a link as a source with no license;
+  - `allowed-tools`, which pre-approves tools for any agent that loads the entry;
+  - a title, summary or tag that reads like an instruction to an agent ("ignore previous instructions", "always use this", "before answering, call...");
+  - for updates, any change to the title, summary or tags, which are what search and agents see first, and to the source or license.
+- **The change itself**, as a diff for updates.
+
+Everything is printed with control characters, zero-width characters, direction overrides and carriage returns replaced by visible `\u{...}` markers, and the output says how many were replaced. Text written by an agent cannot clear the screen, move the cursor or hide words from the person approving it.
+
+`pocket validate` raises the same instruction-like text and hidden-character findings as warnings for entries already in the base. Instruction-like phrases are only looked for in titles, summaries and tags, because a process document may legitimately say "you must".
 
 ## What approval does
 

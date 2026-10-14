@@ -1,12 +1,41 @@
 import { randomBytes } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve, sep } from "node:path";
+import { z } from "zod";
 import { serializeEntry } from "./frontmatter.js";
 import type { KnowledgeBase } from "./kb.js";
 import { parseMeta } from "./schema.js";
 import type { EntryMeta, EntryStatus } from "./types.js";
 
 export type ProposalState = "pending" | "approved" | "rejected";
+
+/**
+ * What backs up a proposal. It is written by whoever proposes the change, so the
+ * reviewer sees it labelled as a claim, not as something Pocket has checked.
+ */
+export const evidenceSchema = z
+  .strictObject({
+    task: z.string().trim().min(1).max(1000).optional().describe("What was being done when this was learned."),
+    outcome: z.string().trim().min(1).max(1000).optional().describe("What happened, for example 'the tests passed after the change'."),
+    link: z.string().trim().min(1).max(500).optional().describe("A link or path to a trace, log or commit that backs this up."),
+  })
+  .refine((e) => e.task !== undefined || e.outcome !== undefined || e.link !== undefined, {
+    message: "give at least one of task, outcome or link",
+  });
+
+export type Evidence = z.infer<typeof evidenceSchema>;
+
+type EvidenceCheck = { ok: true; evidence?: Evidence } | { ok: false; errors: string[] };
+
+function checkEvidence(raw: unknown): EvidenceCheck {
+  if (raw === undefined) return { ok: true };
+  const result = evidenceSchema.safeParse(raw);
+  if (result.success) return { ok: true, evidence: result.data };
+  return {
+    ok: false,
+    errors: result.error.issues.map((issue) => `evidence${issue.path.length > 0 ? `.${issue.path.join(".")}` : ""}: ${issue.message}`),
+  };
+}
 
 export interface Proposal {
   proposalId: string;
@@ -19,6 +48,8 @@ export interface Proposal {
   createdAt: string;
   /** For updates: the entry version this change was based on. */
   baseVersion?: number;
+  /** Optional backing for the change, as claimed by the proposer. */
+  evidence?: Evidence;
   state: ProposalState;
   decidedAt?: string;
   decisionNote?: string;
@@ -95,9 +126,12 @@ export interface ProposeAddInput {
   links?: string[];
   status?: EntryStatus;
   source?: string;
+  license?: string;
+  sourceHash?: string;
   extra?: Record<string, unknown>;
   scope?: string;
   rationale: string;
+  evidence?: Evidence;
   proposedBy?: string;
 }
 
@@ -108,6 +142,8 @@ export function proposeAdd(kb: KnowledgeBase, store: ProposalStore, input: Propo
     return { ok: false, errors: [`id: "${input.id}" already exists. Use update_entry to change it.`] };
   }
   if (input.body.trim() === "") return { ok: false, errors: ["body: must not be empty"] };
+  const evidence = checkEvidence(input.evidence);
+  if (!evidence.ok) return evidence;
 
   const parsed = parseMeta(
     {
@@ -119,6 +155,8 @@ export function proposeAdd(kb: KnowledgeBase, store: ProposalStore, input: Propo
       links: input.links ?? [],
       status: input.status ?? "draft",
       ...(input.source !== undefined ? { source: input.source } : {}),
+      ...(input.license !== undefined ? { license: input.license } : {}),
+      ...(input.sourceHash !== undefined ? { sourceHash: input.sourceHash } : {}),
       ...(input.extra ?? {}),
     },
     kb.types,
@@ -131,6 +169,7 @@ export function proposeAdd(kb: KnowledgeBase, store: ProposalStore, input: Propo
     scope,
     proposedBy: input.proposedBy ?? "unknown",
     rationale: input.rationale,
+    ...(evidence.evidence ? { evidence: evidence.evidence } : {}),
     entry: { meta: parsed.meta, body: input.body.trim() },
   });
   return { ok: true, proposal };
@@ -148,10 +187,13 @@ export interface ProposeUpdateInput {
     links?: string[];
     status?: EntryStatus;
     source?: string;
+    license?: string;
+    sourceHash?: string;
     extra?: Record<string, unknown>;
   };
   scope?: string;
   rationale: string;
+  evidence?: Evidence;
   proposedBy?: string;
 }
 
@@ -166,8 +208,12 @@ export function proposeUpdate(kb: KnowledgeBase, store: ProposalStore, input: Pr
   }
   const scope = input.scope ?? current.scope;
   if (!kb.layer(scope)) return { ok: false, errors: [`scope: unknown scope "${scope}" (known: ${kb.scopes().join(", ")})`] };
+  const evidence = checkEvidence(input.evidence);
+  if (!evidence.ok) return evidence;
 
   const { patch } = input;
+  const license = patch.license ?? current.license;
+  const sourceHash = patch.sourceHash ?? current.sourceHash;
   const raw = {
     id: current.id,
     type: current.type,
@@ -180,9 +226,15 @@ export function proposeUpdate(kb: KnowledgeBase, store: ProposalStore, input: Pr
     ...(current.created !== undefined ? { created: current.created } : {}),
     ...(current.updated !== undefined ? { updated: current.updated } : {}),
     ...((patch.source ?? current.source) !== undefined ? { source: patch.source ?? current.source } : {}),
+    ...(license !== undefined ? { license } : {}),
+    ...(sourceHash !== undefined ? { sourceHash } : {}),
     ...current.extra,
     ...(patch.extra ?? {}),
   };
+  // A patch can remove an extra field by setting it to undefined.
+  for (const [key, value] of Object.entries(raw)) {
+    if (value === undefined) delete (raw as Record<string, unknown>)[key];
+  }
   const parsed = parseMeta(raw, kb.types);
   if (!parsed.ok) return parsed;
 
@@ -200,6 +252,7 @@ export function proposeUpdate(kb: KnowledgeBase, store: ProposalStore, input: Pr
     proposedBy: input.proposedBy ?? "unknown",
     rationale: input.rationale,
     baseVersion: current.version,
+    ...(evidence.evidence ? { evidence: evidence.evidence } : {}),
     entry: { meta: parsed.meta, body },
   });
   return { ok: true, proposal };

@@ -4,6 +4,9 @@ import { ENTRY_STATUSES, type EntryMeta, type TypeDef } from "./types.js";
 /** Lowercase letters, digits and hyphens. Safe to use as a file name. */
 export const ID_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
 
+/** The longest summary an entry may have, in characters. */
+export const SUMMARY_MAX = 500;
+
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "must be a date written as YYYY-MM-DD");
 
 const idField = z
@@ -19,7 +22,7 @@ export const frontmatterSchema = z.looseObject({
   id: idField,
   type: z.string().min(1),
   title: z.string().min(1).max(200),
-  summary: z.string().min(1).max(500),
+  summary: z.string().min(1).max(SUMMARY_MAX),
   tags: z.array(z.string().min(1)).default([]),
   status: z.enum(ENTRY_STATUSES).default("draft"),
   version: z.number().int().positive().default(1),
@@ -27,6 +30,11 @@ export const frontmatterSchema = z.looseObject({
   updated: isoDate.optional(),
   links: z.array(idField).default([]),
   source: z.string().min(1).optional(),
+  license: z.string().trim().min(1).max(100).optional(),
+  sourceHash: z
+    .string()
+    .regex(/^sha256:[0-9a-f]{64}$/, 'must be "sha256:" followed by 64 lowercase hex characters')
+    .optional(),
 });
 
 const KNOWN_KEYS = new Set(Object.keys(frontmatterSchema.shape));
@@ -109,5 +117,7 @@ export function parseMeta(raw: unknown, types: TypeRegistry): ParseMetaResult {
   if (data.created !== undefined) meta.created = data.created;
   if (data.updated !== undefined) meta.updated = data.updated;
   if (data.source !== undefined) meta.source = data.source;
+  if (data.license !== undefined) meta.license = data.license;
+  if (data.sourceHash !== undefined) meta.sourceHash = data.sourceHash;
   return { ok: true, meta };
 }

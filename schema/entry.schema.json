@@ -52,6 +52,17 @@
       "type": "string",
       "minLength": 1,
       "description": "Where the knowledge came from: a URL, document or event."
+    },
+    "license": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "The license the content is available under, for example Apache-2.0 or CC-BY-4.0."
+    },
+    "sourceHash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "sha256: and the hex digest of the original material this entry was imported from."
     }
   }
 }

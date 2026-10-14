@@ -15,7 +15,9 @@ Recent agent-skills research points the same way as Pocket's design:
 
 ## 1. Provenance, license and evidence
 
-Entries already have a `source` field. Add:
+Status: done, in the unreleased version ([#3](https://github.com/gitSITTI/Pocket/issues/3)). See [docs/approval-flow.md](docs/approval-flow.md#what-the-reviewer-sees).
+
+Entries already had a `source` field. This added:
 
 - `license` and a content hash for imported material.
 - An optional `evidence` block on proposals: the task, the outcome and a link to a trace or log.
@@ -24,11 +26,13 @@ Entries already have a `source` field. Add:
 
 ## 2. Agent Skills import and export
 
+Status: done, in the unreleased version ([#4](https://github.com/gitSITTI/Pocket/issues/4)). See [docs/agent-skills.md](docs/agent-skills.md).
+
 `skill` entries map onto the open [Agent Skills format](https://agentskills.io/specification): a folder with a `SKILL.md`, a `name` of up to 64 lowercase letters, digits and hyphens that matches the folder name, and a `description` of up to 1,024 characters.
 
 - `pocket export skills <dir>` writes a skill folder per `skill` entry.
 - Import reads a skill folder and creates a proposal.
-- Pocket's ID pattern allows `--` and a trailing hyphen, which the Agent Skills format forbids. Export needs to check for that.
+- Pocket's ID pattern allows `--` and a trailing hyphen, which the Agent Skills format forbids. Export skips such entries and says why.
 
 ## 3. MCP resources and prompts
 

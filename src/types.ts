@@ -53,6 +53,10 @@ export interface EntryMeta {
   updated?: string;
   links: string[];
   source?: string;
+  /** The license the content is available under, for example "Apache-2.0" or "CC-BY-4.0". */
+  license?: string;
+  /** "sha256:" and the hex digest of the original material this entry was imported from. */
+  sourceHash?: string;
   /** Any additional frontmatter keys, preserved as written. */
   extra: Record<string, unknown>;
 }

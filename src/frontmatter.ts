@@ -42,6 +42,8 @@ export function serializeEntry(meta: EntryMeta, body: string): string {
   if (meta.updated !== undefined) ordered.updated = meta.updated;
   ordered.links = meta.links;
   if (meta.source !== undefined) ordered.source = meta.source;
+  if (meta.license !== undefined) ordered.license = meta.license;
+  if (meta.sourceHash !== undefined) ordered.sourceHash = meta.sourceHash;
   for (const [key, value] of Object.entries(meta.extra)) ordered[key] = value;
 
   const yaml = stringify(ordered, { lineWidth: 0 });

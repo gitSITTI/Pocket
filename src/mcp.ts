@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { KnowledgeBase, summarize } from "./kb.js";
-import { ProposalStore, proposeAdd, proposeUpdate, type ProposeResult } from "./proposals.js";
+import { ProposalStore, evidenceSchema, proposeAdd, proposeUpdate, type ProposeResult } from "./proposals.js";
 import { ENTRY_STATUSES } from "./types.js";
 
 function packageVersion(): string {
@@ -94,6 +94,8 @@ export function createServer(kb: KnowledgeBase, store: ProposalStore): McpServer
         updated: entry.updated,
         links: entry.links,
         source: entry.source,
+        license: entry.license,
+        sourceHash: entry.sourceHash,
         extra: entry.extra,
         body: entry.body,
       });
@@ -187,9 +189,11 @@ export function createServer(kb: KnowledgeBase, store: ProposalStore): McpServer
         links: z.array(z.string()).optional().describe("Ids of related entries."),
         status: statusField.optional().describe("Defaults to draft."),
         source: z.string().optional().describe("Where this knowledge came from: a URL, document or event."),
+        license: z.string().optional().describe("The license the knowledge is available under, for example 'MIT' or 'CC-BY-4.0'. Say so when you copied it from somewhere."),
         extra: z.record(z.string(), z.unknown()).optional().describe("Additional frontmatter fields, such as those a type requires."),
         scope: z.string().optional().describe("Content layer to write to. Defaults to the most specific layer."),
         rationale: z.string().min(1).describe("Why this entry should be added."),
+        evidence: evidenceSchema.optional().describe("What backs this up: the task, the outcome and a link to a trace or log. The reviewer sees it as your claim."),
         proposed_by: z.string().optional().describe("Who or what is proposing this, for the audit trail."),
       },
       annotations: writeAnnotations,
@@ -207,6 +211,8 @@ export function createServer(kb: KnowledgeBase, store: ProposalStore): McpServer
           ...(args.links ? { links: args.links } : {}),
           ...(args.status ? { status: args.status } : {}),
           ...(args.source ? { source: args.source } : {}),
+          ...(args.license ? { license: args.license } : {}),
+          ...(args.evidence ? { evidence: args.evidence } : {}),
           ...(args.extra ? { extra: args.extra } : {}),
           ...(args.scope ? { scope: args.scope } : {}),
           ...(args.proposed_by ? { proposedBy: args.proposed_by } : {}),
@@ -230,9 +236,11 @@ export function createServer(kb: KnowledgeBase, store: ProposalStore): McpServer
         links: z.array(z.string()).optional().describe("The complete new link list."),
         status: statusField.optional(),
         source: z.string().optional(),
+        license: z.string().optional(),
         extra: z.record(z.string(), z.unknown()).optional(),
         scope: z.string().optional().describe("Write the result to this layer, creating an override if it differs from the current one."),
         rationale: z.string().min(1).describe("Why this change should be made."),
+        evidence: evidenceSchema.optional().describe("What backs this change up: the task, the outcome and a link to a trace or log. The reviewer sees it as your claim."),
         proposed_by: z.string().optional(),
       },
       annotations: writeAnnotations,
@@ -244,6 +252,7 @@ export function createServer(kb: KnowledgeBase, store: ProposalStore): McpServer
           rationale: args.rationale,
           ...(args.base_version !== undefined ? { baseVersion: args.base_version } : {}),
           ...(args.scope ? { scope: args.scope } : {}),
+          ...(args.evidence ? { evidence: args.evidence } : {}),
           ...(args.proposed_by ? { proposedBy: args.proposed_by } : {}),
           patch: {
             ...(args.title !== undefined ? { title: args.title } : {}),
@@ -253,6 +262,7 @@ export function createServer(kb: KnowledgeBase, store: ProposalStore): McpServer
             ...(args.links !== undefined ? { links: args.links } : {}),
             ...(args.status !== undefined ? { status: args.status } : {}),
             ...(args.source !== undefined ? { source: args.source } : {}),
+            ...(args.license !== undefined ? { license: args.license } : {}),
             ...(args.extra !== undefined ? { extra: args.extra } : {}),
           },
         }),

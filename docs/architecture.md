@@ -30,6 +30,10 @@ Pocket is a thin layer over a folder of Markdown files.
 | `src/kb.ts` | Scan content layers, apply layering, collect validation issues, answer queries |
 | `src/search.ts` | Dependency-free BM25 index with field weights |
 | `src/proposals.ts` | Proposal store, proposing add/update, approving and rejecting |
+| `src/review.ts` | The text a person reads when reviewing a proposal, and the prompts shown with it |
+| `src/lint.ts` | Flags instruction-like text and hidden characters in entries |
+| `src/sanitize.ts` | Detects hidden characters and makes them visible |
+| `src/skills.ts` | Import and export of the Agent Skills format |
 | `src/mcp.ts` | Defines the MCP tools |
 | `src/server.ts` | Executable entry point for the MCP server (stdio) |
 | `src/cli.ts` | Executable entry point for the human CLI |
