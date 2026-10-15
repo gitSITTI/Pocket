@@ -37,11 +37,18 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      # The package is optional, so the jobs above run without it. This job installs it (CPU only:
-      # skipping the install scripts avoids a large GPU download) and runs the real thing against
-      # a tiny test model. It is pinned to the version that was tested; peerDependencies allows newer.
+      # The package is optional, so the jobs above run without it. This job installs it and runs the
+      # real thing against a tiny test model. Notes:
+      # - It is pinned to the version that was tested; peerDependencies allows newer ones.
+      # - Skipping the install scripts avoids a large GPU download; the CPU build works without them.
+      # - npm 11 will not install an optional peer dependency into the project that declares it, so
+      #   the declaration is removed from this throwaway checkout first. Users are not affected: they
+      #   install the package in their own project.
       - name: Install the optional package
-        run: ONNXRUNTIME_NODE_INSTALL=skip npm install --no-save --ignore-scripts @huggingface/transformers@4.3.1
+        run: |
+          npm pkg delete peerDependencies peerDependenciesMeta
+          ONNXRUNTIME_NODE_INSTALL=skip npm install --no-save --ignore-scripts @huggingface/transformers@4.3.1
+          test -d node_modules/@huggingface/transformers
       - run: POCKET_REQUIRE_SEMANTIC_TESTS=1 npm test
       - run: npm run build
       - name: Search by meaning through the built command line and server

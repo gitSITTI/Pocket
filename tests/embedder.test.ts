@@ -2,7 +2,7 @@ import { createRequire } from "node:module";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { SemanticConfig } from "../src/config.js";
-import { semanticSearchFor, transformersEmbedder } from "../src/embedder.js";
+import { isMissingPackage, semanticSearchFor, transformersEmbedder } from "../src/embedder.js";
 import { fixture, tempDir, writeEntry } from "./helpers.js";
 
 /**
@@ -114,6 +114,24 @@ describe.skipIf(installed)("without the optional package", () => {
     expect(hits.map((h) => h.entry.id)).toEqual(["release-checklist"]);
     expect(note).toMatch(/npm install @huggingface\/transformers/);
     expect(warnings).toHaveLength(1);
+  });
+});
+
+describe("isMissingPackage", () => {
+  it.each([
+    ["Node ESM", "Cannot find package '@huggingface/transformers' imported from /app/dist/embedder.js"],
+    ["Node CommonJS", "Cannot find module '@huggingface/transformers'\nRequire stack:\n- /app/x.js"],
+    ["Vite", 'Could not resolve "@huggingface/transformers" imported by "pocket-bok".'],
+  ])("recognizes the message from %s", (_runtime, message) => {
+    expect(isMissingPackage(new Error(message))).toBe(true);
+  });
+
+  it("does not hide an installed package that is broken", () => {
+    const path = "/app/node_modules/@huggingface/transformers/dist/transformers.node.mjs";
+    expect(isMissingPackage(new Error(`Cannot find package 'onnxruntime-node' imported from ${path}`))).toBe(false);
+    expect(isMissingPackage(new Error(`Cannot find module 'onnxruntime-node'\nRequire stack:\n- ${path}`))).toBe(false);
+    expect(isMissingPackage(new Error("invalid ELF header"))).toBe(false);
+    expect(isMissingPackage("something else")).toBe(false);
   });
 });
 

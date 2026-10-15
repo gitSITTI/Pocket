@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 import { cpSync, existsSync, readdirSync, renameSync } from "node:fs";
-import { resolve } from "node:path";
+import { isAbsolute, resolve } from "node:path";
 import { createInterface } from "node:readline/promises";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
-import { loadConfig, type PocketConfig } from "./config.js";
+import { DEFAULT_EMBEDDING_MODEL, loadConfig, type PocketConfig } from "./config.js";
 import { semanticSearchFor } from "./embedder.js";
 import { serializeEntry } from "./frontmatter.js";
 import { KnowledgeBase } from "./kb.js";
@@ -310,7 +310,9 @@ async function main(): Promise<void> {
       const { config, kb } = open();
       const semantic = openSemantic(config, kb);
       if (!semantic) fail('Search by meaning is not turned on. Add "semanticSearch": true to the config file (see docs/semantic-search.md).');
-      console.error("Preparing search by meaning. The first run downloads the model (about 23 MB) and can take a minute.");
+      const { model, dtype } = config.semantic!;
+      const download = isAbsolute(model) ? "" : model === DEFAULT_EMBEDDING_MODEL && dtype === "q8" ? " The first run downloads the model (about 23 MB)." : " The first run downloads the model.";
+      console.error(`Preparing search by meaning.${download}`);
       await semantic.sync();
       const { total, embedded, failure } = semantic.status();
       if (failure) fail(`Could not prepare search by meaning: ${failure}`);

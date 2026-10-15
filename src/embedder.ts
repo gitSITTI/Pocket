@@ -21,27 +21,34 @@ interface TransformersModule {
 type Extractor = (texts: string[], options: { pooling: "mean"; normalize: boolean }) => Promise<{ data: Float32Array | number[]; dims: number[] }>;
 
 /**
+ * True when `error` says the optional package itself cannot be found. The name must appear in
+ * quotes: a package that is installed but misses one of its own dependencies mentions that other
+ * name in the message, and that problem should be shown as it is, not as "please install".
+ * Node, the CommonJS resolver and Vite each word the message differently.
+ */
+export function isMissingPackage(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /Cannot find (?:package|module)|Could not resolve|Failed to resolve/i.test(message) && /['"]@huggingface\/transformers['"]/.test(message);
+}
+
+/**
  * Finds the optional package. It is looked up where Pocket is installed first, then next to the
  * config file, so a knowledge base repository can carry the package itself and be used with `npx`.
  */
 async function loadTransformers(baseDir: string): Promise<TransformersModule> {
   try {
     return (await import(PACKAGE)) as TransformersModule;
-  } catch (first) {
-    if (!isNotFound(first)) throw first;
-    try {
-      const resolved = createRequire(join(baseDir, "package.json")).resolve(PACKAGE);
-      return (await import(pathToFileURL(resolved).href)) as TransformersModule;
-    } catch (second) {
-      if (isNotFound(second)) throw new Error(installHint(baseDir));
-      throw second;
-    }
+  } catch (error) {
+    if (!isMissingPackage(error)) throw error;
   }
-}
-
-function isNotFound(error: unknown): boolean {
-  const code = (error as NodeJS.ErrnoException | undefined)?.code;
-  return code === "ERR_MODULE_NOT_FOUND" || code === "MODULE_NOT_FOUND";
+  let resolved: string;
+  try {
+    resolved = createRequire(join(baseDir, "package.json")).resolve(PACKAGE);
+  } catch (error) {
+    if (isMissingPackage(error)) throw new Error(installHint(baseDir));
+    throw error;
+  }
+  return (await import(pathToFileURL(resolved).href)) as TransformersModule;
 }
 
 /**

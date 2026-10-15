@@ -135,6 +135,19 @@ const server = createServer(kb, new ProposalStore(config.proposalsDir), semantic
 void semantic.sync(); // make vectors in the background
 ```
 
+## Testing Pocket itself
+
+The tests that run the real package use a tiny model kept in `tests/fixtures/toy-model` (rebuild it with `tests/fixtures/make-toy-model.py`). They are skipped when the package is not installed, so `npm test` works on a plain clone. CI has a separate job that installs it and sets `POCKET_REQUIRE_SEMANTIC_TESTS=1` so a missing package fails instead of skipping.
+
+To run them in a clone of Pocket, note that npm 11 will not install an optional peer dependency into the project that declares it. Install it without that declaration, in a throwaway copy:
+
+```sh
+npm pkg delete peerDependencies peerDependenciesMeta
+ONNXRUNTIME_NODE_INSTALL=skip npm install --no-save --ignore-scripts @huggingface/transformers@4.3.1
+npm test && npm run build && npm run smoke:semantic
+git checkout package.json
+```
+
 ## Troubleshooting
 
 | What you see | What to do |
