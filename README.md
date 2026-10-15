@@ -101,6 +101,7 @@ If someone edited the entry in the meantime, the proposal is rejected as stale i
 - [Secret scanning for all your repos](docs/gitleaks-for-all-repos.md)
 - [Publishing](docs/publishing.md): npm and the MCP Registry
 - [Reverse engineering](docs/reverse-engineering.md): pairing Pocket with REA, and importing its skills
+- [Building connectors](docs/building-connectors.md): a recipe for turning an app's traffic or published API into an MCP connector, with a [runnable demo](demos/connector-from-traffic/README.md)
 - [Content sources](docs/content-sources.md): open material worth importing, with licenses
 - [Roadmap](ROADMAP.md): what may come next, and why
 

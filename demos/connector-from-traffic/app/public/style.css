@@ -1,0 +1,4 @@
+body { font-family: system-ui, sans-serif; margin: 2rem; }
+main { max-width: 40rem; }
+li { cursor: pointer; margin: .25rem 0; }
+#login-error { color: #b00020; }

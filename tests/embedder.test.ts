@@ -1,6 +1,6 @@
 import { createRequire } from "node:module";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { SemanticConfig } from "../src/config.js";
 import { isMissingPackage, semanticSearchFor, transformersEmbedder } from "../src/embedder.js";
 import { fixture, tempDir, writeEntry } from "./helpers.js";
@@ -14,6 +14,9 @@ import { fixture, tempDir, writeEntry } from "./helpers.js";
  * The package is optional, so without it these tests are skipped. CI has a job that installs it and
  * sets POCKET_REQUIRE_SEMANTIC_TESTS=1, which turns a missing package into a failure.
  */
+// The first load of onnxruntime and the model is slow on a busy machine, and the default 5 seconds is not enough.
+vi.setConfig({ testTimeout: 60_000 });
+
 const installed = (() => {
   try {
     createRequire(import.meta.url).resolve("@huggingface/transformers");

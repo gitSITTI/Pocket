@@ -130,8 +130,10 @@ describe("bundled examples", () => {
     expect(kb.listEntries().map((e) => e.type).sort()).toEqual([
       "contract",
       "lesson-learned",
+      "lesson-learned",
       "library",
       "pipeline",
+      "process",
       "process",
       "process",
       "process",
@@ -145,6 +147,17 @@ describe("bundled examples", () => {
     const kb = new KnowledgeBase(config);
     expect(kb.search("reverse engineer")[0]?.entry.id).toBe("example-reverse-engineering");
     expect(kb.getEntry("example-process-audit")?.links).toContain("example-reverse-engineering");
+  });
+
+  it("include the connector recipe and the lesson about generated API descriptions", () => {
+    const config = loadConfig({ cwd: resolve("."), env: { POCKET_CONTENT_DIR: "examples/content" } });
+    const kb = new KnowledgeBase(config);
+    expect(kb.search("build an MCP connector for an app")[0]?.entry.id).toBe("example-build-connector");
+    expect(kb.search("generated api description missing query parameters")[0]?.entry.id).toBe("example-generated-spec-gaps");
+    // Every link between the examples points at an entry that exists.
+    for (const id of ["example-build-connector", "example-generated-spec-gaps"]) {
+      for (const link of kb.getEntry(id)?.links ?? []) expect(kb.getEntry(link), `${id} -> ${link}`).toBeDefined();
+    }
   });
 
   it("are findable by search", () => {

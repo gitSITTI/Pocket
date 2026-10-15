@@ -83,6 +83,15 @@ An extension, off by default, so the core keeps its zero-dependency search.
 - Default allowlist: Apache-2.0, MIT, CC0 and CC-BY. Non-commercial and AGPL sources are rejected unless the user overrides it.
 - See [docs/content-sources.md](docs/content-sources.md) for sources whose licenses have been checked.
 
+## 9. Connectors for apps
+
+Status: guide and demo done, in the unreleased version. No code was added to the core. See [docs/building-connectors.md](docs/building-connectors.md) and [the demo](demos/connector-from-traffic/README.md).
+
+- Done: a recipe from an app's traffic (or an API description the vendor publishes) to a generated MCP server that offers reads only, using [mitmproxy2swagger](https://github.com/alufers/mitmproxy2swagger) and [openapi-mcp-generator](https://www.npmjs.com/package/openapi-mcp-generator) (both MIT), with a review overlay, a coverage check and a live check by real MCP tool calls. Run end to end on a small app that ships with the repository, and in CI.
+- Done: two example entries, one for the process and one for what the generated description got wrong.
+- Not proven: a real third-party app, cookie-based or rotating sign-in, GraphQL, WebSockets and streaming, capture from desktop and mobile apps (certificate pinning), and the generator's `--custom-auth` option. The generated server also reports API errors as text without the MCP `isError` flag.
+- Not planned for now: a `pocket connector` command. The pieces are other projects' tools and the steps need a person's decisions, so a recipe that is kept up to date is worth more than a wrapper that hides them.
+
 ## Out of scope for the core
 
 - Writing approved entries without a person (see [docs/approval-flow.md](docs/approval-flow.md)).

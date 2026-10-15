@@ -53,6 +53,10 @@ The built-in types fit lessons and processes. If you record many findings, add a
 
 Entries of that type then need an `artifact` key, where you can put the name, version and SHA-256 of what was analyzed.
 
+## From findings to a connector
+
+If what you want out of an analysis is a way for an agent to use the app, see [Building a connector from an app](./building-connectors.md). It chains a recording of the app's traffic, a generated API description, a reviewed overlay and a generated MCP server, and has a demo that was run end to end. REA's part in it is the first look at programs that are not web pages; what was measured of it is under "Native and mobile apps" there.
+
 ## Importing REA's skills
 
 REA ships Agent Skills, instructions for an agent on how to use REA well. Pocket can import them as proposals:

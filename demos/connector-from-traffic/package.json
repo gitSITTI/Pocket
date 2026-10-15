@@ -1,0 +1,15 @@
+{
+  "name": "connector-from-traffic-demo",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Demo for docs/building-connectors.md. Not part of the published pocket-bok package.",
+  "type": "module",
+  "scripts": {
+    "capture": "node capture/capture.mjs",
+    "build": "node pipeline/run.mjs",
+    "verify": "node pipeline/verify.mjs"
+  },
+  "devDependencies": {
+    "openapi-mcp-generator": "4.1.0"
+  }
+}

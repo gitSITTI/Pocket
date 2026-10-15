@@ -1,0 +1,9 @@
+{
+  "comment": "What a person (or the agent, then a person) decided after looking at the first-pass list of endpoints. Re-run the pipeline after the app changes and these decisions are applied again.",
+  "apiPath": "/api",
+  "include": ["/session", "/me", "/notes", "/notes/{id}"],
+  "ignoredBecause": {
+    "/events": "Analytics beacon the page sends on every action. Not part of the app's data.",
+    "/notes/2": "A single observed value; /notes/{id} already covers it."
+  }
+}

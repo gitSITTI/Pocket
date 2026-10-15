@@ -21,3 +21,6 @@ coverage/
 
 # Private term list for the denylist check: never commit this file
 /.denylist
+
+# Demo output: the generated connector and spec are rebuilt by `node pipeline/run.mjs`
+/demos/*/build/

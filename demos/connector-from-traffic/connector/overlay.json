@@ -1,0 +1,76 @@
+{
+  "info": {
+    "title": "Notebook connector",
+    "version": "1.0.0",
+    "description": "Read access to a Notebook account, recovered from the web app's own traffic. Not an official API."
+  },
+  "components": {
+    "securitySchemes": {
+      "sessionToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "The token the web app receives when you sign in. Take it from your own signed-in session."
+      }
+    }
+  },
+  "security": [{ "sessionToken": [] }],
+  "paths": {
+    "/session": {
+      "post": {
+        "operationId": "createSession",
+        "summary": "Sign in",
+        "description": "Not offered as a tool: the connector takes a token you already have instead of handling your password.",
+        "security": []
+      }
+    },
+    "/me": {
+      "get": {
+        "operationId": "getMe",
+        "summary": "Who is signed in",
+        "description": "Return the account the token belongs to.",
+        "x-mcp": true
+      }
+    },
+    "/notes": {
+      "get": {
+        "operationId": "listNotes",
+        "summary": "List notes",
+        "description": "List notes, newest page first. Pass the previous response's next_cursor as cursor to get the next page; next_cursor is null on the last page.",
+        "x-mcp": true,
+        "parameters": [
+          { "name": "limit", "in": "query", "required": false, "description": "Page size. The app uses 3; the server allows up to 50.", "schema": { "type": "integer", "minimum": 1, "maximum": 50 } },
+          { "name": "tag", "in": "query", "required": false, "description": "Only notes carrying this tag.", "schema": { "type": "string" } },
+          { "name": "cursor", "in": "query", "required": false, "description": "Opaque position from a previous response's next_cursor.", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "next_cursor": { "type": "string", "nullable": true, "description": "Pass as cursor for the next page. null when there are no more." },
+                    "total": { "type": "integer", "description": "How many notes match, across all pages." }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createNote",
+        "summary": "Create a note",
+        "description": "Changes data. Left out of the connector on purpose; add \"x-mcp\": true here to offer it."
+      }
+    },
+    "/notes/{id}": {
+      "get": {
+        "operationId": "getNote",
+        "summary": "Read one note",
+        "description": "Return one note, including its body.",
+        "x-mcp": true,
+        "parameters": [{ "name": "id", "in": "path", "required": true, "description": "The note's numeric id, from listNotes.", "schema": { "type": "integer" } }]
+      }
+    }
+  }
+}

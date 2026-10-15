@@ -54,6 +54,28 @@ jobs:
       - name: Search by meaning through the built command line and server
         run: npm run smoke:semantic
 
+  connector-demo:
+    name: Connector demo (captured traffic to a working MCP server)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: npm ci
+      - run: npm ci --prefix demos/connector-from-traffic
+      - run: pip install mitmproxy2swagger==0.15.0
+      # Recovers a spec from the committed capture, generates an MCP server from it, builds it, and
+      # makes real tool calls against the demo app. See docs/building-connectors.md.
+      - name: Capture to spec to connector to verified tool calls
+        run: node demos/connector-from-traffic/pipeline/run.mjs
+      - name: The same from a spec the vendor publishes
+        run: node demos/connector-from-traffic/pipeline/run.mjs --from-spec official/openapi.yaml --expose getMe,listNotes,getNote
+
   gitleaks:
     runs-on: ubuntu-latest
     env:

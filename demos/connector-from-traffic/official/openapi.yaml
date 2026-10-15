@@ -1,0 +1,127 @@
+openapi: 3.0.3
+info:
+  title: Notebook API
+  version: 1.0.0
+  description: |
+    A stand-in for the documentation a vendor might publish. In the demo it is written by hand to
+    match the demo app; it shows the other starting point, where an API is already documented and
+    no reverse engineering is needed.
+servers:
+  - url: http://127.0.0.1:4010/api
+security:
+  - sessionToken: []
+paths:
+  /session:
+    post:
+      operationId: createSession
+      summary: Sign in
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username: { type: string }
+                password: { type: string }
+      responses:
+        '200':
+          description: Signed in
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+        '401':
+          description: Wrong username or password
+  /me:
+    get:
+      operationId: getMe
+      summary: Who is signed in
+      description: Return the account the token belongs to.
+      responses:
+        '200':
+          description: The account
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: integer }
+                  name: { type: string }
+                  plan: { type: string }
+  /notes:
+    get:
+      operationId: listNotes
+      summary: List notes
+      description: List notes a page at a time. Pass next_cursor from the previous response as cursor to get the next page.
+      parameters:
+        - { name: limit, in: query, required: false, description: Page size, schema: { type: integer, minimum: 1, maximum: 50 } }
+        - { name: tag, in: query, required: false, description: Only notes carrying this tag, schema: { type: string } }
+        - { name: cursor, in: query, required: false, description: Position from a previous next_cursor, schema: { type: string } }
+      responses:
+        '200':
+          description: A page of notes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: integer }
+                        title: { type: string }
+                        tags: { type: array, items: { type: string } }
+                        updated: { type: string }
+                  next_cursor: { type: string, nullable: true }
+                  total: { type: integer }
+    post:
+      operationId: createNote
+      summary: Create a note
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title]
+              properties:
+                title: { type: string }
+                body: { type: string }
+                tags: { type: array, items: { type: string } }
+      responses:
+        '201':
+          description: The new note
+  /notes/{id}:
+    get:
+      operationId: getNote
+      summary: Read one note
+      description: Return one note, including its body.
+      parameters:
+        - { name: id, in: path, required: true, description: The note's numeric id, schema: { type: integer } }
+      responses:
+        '200':
+          description: The note
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: integer }
+                  title: { type: string }
+                  body: { type: string }
+                  tags: { type: array, items: { type: string } }
+                  updated: { type: string }
+        '404':
+          description: No such note
+components:
+  securitySchemes:
+    sessionToken:
+      type: http
+      scheme: bearer

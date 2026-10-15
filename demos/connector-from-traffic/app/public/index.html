@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Notebook</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main>
+    <h1>Notebook</h1>
+    <form id="login">
+      <input id="username" placeholder="username" autocomplete="off">
+      <input id="password" type="password" placeholder="password" autocomplete="off">
+      <button id="sign-in" type="submit">Sign in</button>
+      <p id="login-error" role="alert"></p>
+    </form>
+    <section id="notebook" hidden>
+      <p id="who"></p>
+      <label>Tag <select id="tag"><option value="">all</option><option>work</option><option>home</option><option>release</option></select></label>
+      <ul id="notes"></ul>
+      <button id="more" type="button" hidden>Load more</button>
+      <article id="detail"></article>
+      <form id="new-note">
+        <input id="new-title" placeholder="title">
+        <input id="new-body" placeholder="body">
+        <button id="add" type="submit">Add note</button>
+      </form>
+    </section>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>
